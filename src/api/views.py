@@ -9,6 +9,20 @@ from django.http import HttpResponse
 from django.utils import timezone
 import time
 
+
+server_start_time = time.time()
+
+def liveness(request):
+    return HttpResponse("Health", status=200)
+
+def readiness(request):
+    current_time = time.time()
+    if current_time - server_start_time >= 25:
+        return HttpResponse("Ready", status=200)
+    else:
+        return HttpResponse("Not ready", status=503)
+
+        
 class IsCreatorOrReadOnly(permissions.BasePermission):
     """
     Object-level permission to only allow owners of an object to edit it.
@@ -57,10 +71,3 @@ class TodoViewSet(viewsets.ModelViewSet):
         user = self.request.user
         creator = user if user.is_authenticated else None
         serializer.save(creator=creator)
-
-
-def readiness(request):
-    return JsonResponse({"status": "ready"})
-
-def liveness(request):
-    return JsonResponse({"status": "alive"})
